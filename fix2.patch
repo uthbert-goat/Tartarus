@@ -1,0 +1,178 @@
+diff --git a/src/Makefile b/src/Makefile
+index 56e1f97..8f52487 100644
+--- a/src/Makefile
++++ b/src/Makefile
+@@ -2,7 +2,7 @@ CC      = gcc
+ PROF    = -O -g
+ NOCRYPT =
+ C_FLAGS =  -Wall $(PROF) $(NOCRYPT)
+-L_FLAGS =  $(PROF)
++L_FLAGS =  $(PROF) -lcrypt
+ 
+ O_FILES = act_comm.o act_ente.o act_info.o act_move.o act_obj.o act_wiz.o \
+           alias.o ban.o comm.o const.o db.o db2.o effects.o fight.o flags.o \
+diff --git a/src/act_info.c b/src/act_info.c
+index d9d658f..da02be3 100644
+--- a/src/act_info.c
++++ b/src/act_info.c
+@@ -42,6 +42,8 @@
+ #include <stdlib.h>
+ #include <ctype.h>
+ #include <time.h>
++#define _XOPEN_SOURCE
++#include <unistd.h>
+ #include "merc.h"
+ #include "magic.h"
+ #include "recycle.h"
+@@ -4429,8 +4431,7 @@ void do_ratings(CHAR_DATA *ch, char *argument)
+ 
+     if (IS_NPC(ch))
+ 	return;
+-send_to_char("\n\r
+-PK kills (levels):    MOB kills (levels):    PK deaths:    MOB deaths:\n\r",ch);
++send_to_char("\n\rPK kills (levels):    MOB kills (levels):    PK deaths:    MOB deaths:\n\r",ch);
+ sprintf(buf,"    %d (%d)                  %d (%d)                %d              %d",
+ ch->pcdata->kills[PK_KILLS], ch->pcdata->kills[PK_LEVELS],
+ ch->pcdata->kills[MOB_KILLS], ch->pcdata->kills[MOB_LEVELS], 
+diff --git a/src/act_obj.c b/src/act_obj.c
+index 84ffed3..a802025 100644
+--- a/src/act_obj.c
++++ b/src/act_obj.c
+@@ -5425,8 +5425,7 @@ void recite_libram_conjuration(CHAR_DATA *ch,CHAR_DATA *victim,OBJ_DATA *scroll,
+ 
+     if (number_percent() < 5)
+     {
+-        act("$n's libram of infinite conjuration glows brightly and
+-vanishes!", ch,0, 0, TO_ROOM);
++        act("$n's libram of infinite conjuration glows brightly and vanishes!", ch,0, 0, TO_ROOM);
+         act("Your libram of infinite conjuration glows brightly then vanishes!",ch,0,0,TO_CHAR);
+         extract_obj(scroll);
+         return;
+diff --git a/src/comm.c b/src/comm.c
+index 9b0a065..c0575a2 100644
+--- a/src/comm.c
++++ b/src/comm.c
+@@ -62,6 +62,8 @@
+ #include <string.h>
+ #include <stdlib.h>
+ #include <time.h>
++#define _XOPEN_SOURCE
++#include <unistd.h>
+ 
+ #include "merc.h"
+ #include "recycle.h"
+@@ -180,16 +182,7 @@ int	accept		args( ( int s, struct sockaddr *addr, int *addrlen ) );
+ int	bind		args( ( int s, struct sockaddr *name, int namelen ) );
+ */
+ 
+-int	close		args( ( int fd ) );
+-int	getpeername	args( ( int s, struct sockaddr *name, int *namelen ) );
+-int	getsockname	args( ( int s, struct sockaddr *name, int *namelen ) );
+ int     gofday    args( ( struct timeval *tp, struct timezone *tzp ) );
+-int	listen		args( ( int s, int backlog ) );
+-int	read		args( ( int fd, char *buf, int nbyte ) );
+-int	select		args( ( int width, fd_set *readfds, fd_set *writefds,
+-			    fd_set *exceptfds, struct timeval *timeout ) );
+-int	socket		args( ( int domain, int type, int protocol ) );
+-int	write		args( ( int fd, char *buf, int nbyte ) );
+ #endif
+ 
+ #if	defined(macintosh)
+@@ -2710,8 +2703,7 @@ bool check_parse_name( char *name )
+      * Reserved words.
+      */
+     if ( is_name( name, 
+-	"all auto immortal self zzz someone something the you demise balance
+-circle loner honor outlaw crusader arcana life enforcer ancient builder") )
++	"all auto immortal self zzz someone something the you demise balance circle loner honor outlaw crusader arcana life enforcer ancient builder") )
+ 	return FALSE;
+ 	
+     if (str_cmp(capitalize(name),"Alander") && (!str_prefix("Alan",name)
+diff --git a/src/merc.h b/src/merc.h
+index 3b4f281..516c69c 100644
+--- a/src/merc.h
++++ b/src/merc.h
+@@ -2481,7 +2481,6 @@ char *	crypt		args( ( const char *key, const char *salt ) );
+ 
+ #if	defined(linux)
+ char *	crypt		args( ( const char *key, const char *salt ) );
+-void *  calloc          args( ( unsigned nelem, size_t size ) );
+ #endif
+ 
+ #if	defined(macintosh)
+diff --git a/src/special.c b/src/special.c
+index 2ead356..b455f8a 100644
+--- a/src/special.c
++++ b/src/special.c
+@@ -2783,8 +2783,7 @@ for (vch = char_list; vch != NULL; vch = vch_next)
+            damage_old(ch,vch,(saves_spell(ch->level,vch,DAM_PIERCE) ?
+ 		dam/2 : dam),sn,DAM_PIERCE,TRUE);
+     else
+-send_to_char("
+-You hear an explosive detonation and shattered bits of bone fall around you.\n\r",vch);
++send_to_char("You hear an explosive detonation and shattered bits of bone fall around you.\n\r",vch);
+ }
+     for (obj = ch->carrying; obj != NULL; obj = obj->next_content)
+         obj_to_room(obj,ch->in_room);
+diff --git a/src/tables.h b/src/tables.h
+index 6e356b3..f950860 100644
+--- a/src/tables.h
++++ b/src/tables.h
+@@ -31,30 +31,6 @@
+ *       found in the file /Tartarus/doc/tartarus.doc                       *
+ ***************************************************************************/
+ 
+-/* game tables */
+-extern  const   struct  clan_type       clan_table[MAX_CLAN];
+-extern	const	struct	position_type	position_table[];
+-extern	const	struct	sex_type	sex_table[];
+-extern	const	struct	size_type	size_table[];
+-
+-/* flag tables */
+-extern	const	struct	flag_type	act_flags[];
+-extern	const	struct	flag_type	plr_flags[];
+-extern	const	struct	flag_type	affect_flags[];
+-extern	const	struct	flag_type	off_flags[];
+-extern	const	struct	flag_type	imm_flags[];
+-extern	const	struct	flag_type	form_flags[];
+-extern	const	struct	flag_type	part_flags[];
+-extern	const	struct	flag_type	comm_flags[];
+-extern	const	struct	flag_type	extra_flags[];
+-extern	const	struct	flag_type	wear_flags[];
+-extern	const	struct	flag_type	weapon_flags[];
+-extern	const	struct	flag_type	container_flags[];
+-extern	const	struct	flag_type	portal_flags[];
+-extern	const	struct	flag_type	room_flags[];
+-extern	const	struct	flag_type	exit_flags[];
+-extern  const   struct  flag_type       mprog_flags[];
+-
+ struct flag_type
+ {
+     char *name;
+@@ -86,3 +62,26 @@ struct size_type
+     char *name;
+ };
+ 
++/* game tables */
++extern  const   struct  clan_type       clan_table[MAX_CLAN];
++extern	const	struct	position_type	position_table[];
++extern	const	struct	sex_type	sex_table[];
++extern	const	struct	size_type	size_table[];
++
++/* flag tables */
++extern	const	struct	flag_type	act_flags[];
++extern	const	struct	flag_type	plr_flags[];
++extern	const	struct	flag_type	affect_flags[];
++extern	const	struct	flag_type	off_flags[];
++extern	const	struct	flag_type	imm_flags[];
++extern	const	struct	flag_type	form_flags[];
++extern	const	struct	flag_type	part_flags[];
++extern	const	struct	flag_type	comm_flags[];
++extern	const	struct	flag_type	extra_flags[];
++extern	const	struct	flag_type	wear_flags[];
++extern	const	struct	flag_type	weapon_flags[];
++extern	const	struct	flag_type	container_flags[];
++extern	const	struct	flag_type	portal_flags[];
++extern	const	struct	flag_type	room_flags[];
++extern	const	struct	flag_type	exit_flags[];
++extern  const   struct  flag_type       mprog_flags[];
